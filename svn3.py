@@ -1321,7 +1321,13 @@ class GUI:
         self.message_queue = queue.Queue()
 
     def run(self):
-        """Start the GUI."""
+        """Start the GUI (enhanced with login dialog).
+
+        This version was moved from newFunctions.py and adds a login dialog
+        before building the main UI. Behavior is unchanged for users who
+        successfully connect; if the user cancels the login dialog the
+        application exits gracefully.
+        """
         self.root = tk.Tk()
         self.root.title(self.i18n["app_title"])
         self.root.geometry(self.config_manager.config.window_geometry)
@@ -1331,6 +1337,17 @@ class GUI:
         self.selected_wc = tk.StringVar(master=self.root)
         self.progress_var = tk.StringVar(master=self.root)
         self.status_var = tk.StringVar(master=self.root)
+
+        # Before building the rest of the UI, present login dialog.
+        # Keep prompting until successful login or user cancels.
+        logged_in = self._show_login_dialog()
+        if not logged_in:
+            # User cancelled login; close application.
+            try:
+                self.root.destroy()
+            except Exception:
+                pass
+            return
 
         # Detect and set system theme
         self._detect_system_theme()
@@ -1660,6 +1677,151 @@ class GUI:
 
             if path:
                 var.set(path)
+
+    def _show_login_dialog(self) -> bool:
+        """
+        Show a modal login dialog requesting repository URL and SVN credentials.
+        Returns True on successful authentication, False if the user cancelled.
+        """
+        dlg = tk.Toplevel(self.root)
+        dlg.title("SVN Login")
+        dlg.transient(self.root)
+        dlg.grab_set()
+        # Slightly larger default size and allow horizontal resizing so the dialog
+        # isn't clipped on smaller screens or with larger fonts.
+        dlg.geometry("560x260")
+        dlg.resizable(True, False)
+
+        # Variables
+        url_var = tk.StringVar(value="")
+        user_var = tk.StringVar(value="")
+        pass_var = tk.StringVar(value="")
+        remember_var = tk.BooleanVar(value=False)
+
+        # Layout
+        frm = ttk.Frame(dlg, padding=12)
+        frm.pack(fill=tk.BOTH, expand=True)
+        # Make the second column (inputs) expand when the dialog is resized
+        frm.columnconfigure(1, weight=1)
+
+        ttk.Label(frm, text="Repository URL:").grid(row=0, column=0, sticky=tk.W, pady=(0, 6))
+        url_entry = ttk.Entry(frm, textvariable=url_var)
+        url_entry.grid(row=0, column=1, pady=(0, 6), sticky=tk.EW)
+
+        ttk.Label(frm, text="Username:").grid(row=1, column=0, sticky=tk.W, pady=(0, 6))
+        user_entry = ttk.Entry(frm, textvariable=user_var)
+        user_entry.grid(row=1, column=1, pady=(0, 6), sticky=tk.EW)
+
+        ttk.Label(frm, text="Password:").grid(row=2, column=0, sticky=tk.W, pady=(0, 6))
+        pass_entry = ttk.Entry(frm, textvariable=pass_var, show="*")
+        pass_entry.grid(row=2, column=1, pady=(0, 6), sticky=tk.EW)
+
+        ttk.Checkbutton(frm, text="Remember credentials (macOS Keychain)",
+                        variable=remember_var).grid(row=3, column=1, sticky=tk.W, pady=(0, 6))
+
+        status_label = ttk.Label(frm, text="", foreground="red")
+        status_label.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(6, 0))
+
+        btn_frame = ttk.Frame(frm)
+        btn_frame.grid(row=5, column=0, columnspan=2, sticky=tk.EW, pady=(12, 0))
+        btn_frame.columnconfigure(0, weight=1)
+
+        def on_ok():
+            url = url_var.get().strip()
+            username = user_var.get().strip()
+            password = pass_var.get()
+            if not url:
+                messagebox.showerror(self.i18n["error"], "Repository URL is required", parent=dlg)
+                return
+
+            # Show busy cursor
+            dlg.config(cursor="watch")
+            dlg.update_idletasks()
+
+            try:
+                success, message = self._attempt_login(url, username, password)
+            finally:
+                dlg.config(cursor="")
+                dlg.update_idletasks()
+
+            if success:
+                # Optionally store credentials in keychain
+                if remember_var.get() and username and password:
+                    try:
+                        # Use service name derived from URL
+                        service = url
+                        self.svn.credential_store.set_credential(service, username, password)
+                    except Exception:
+                        # Non-fatal; just log
+                        logging.debug("Failed to store credentials in keychain")
+
+                dlg.grab_release()
+                dlg.destroy()
+                self.status_var.set(f"Connected to {url}")
+            else:
+                # Keep dialog open and show message
+                status_label.config(text=message or "Authentication failed")
+                # Also show a messagebox for emphasis
+                messagebox.showerror(self.i18n["error"], message or "Failed to connect or authenticate", parent=dlg)
+
+        def on_cancel():
+            if messagebox.askyesno("Cancel", "Cancel login and quit application?", parent=dlg):
+                dlg.grab_release()
+                dlg.destroy()
+
+        ok_btn = ttk.Button(btn_frame, text="Connect", command=on_ok)
+        ok_btn.pack(side=tk.RIGHT, padx=6)
+        cancel_btn = ttk.Button(btn_frame, text="Cancel", command=on_cancel)
+        cancel_btn.pack(side=tk.RIGHT)
+
+        # Focus
+        url_entry.focus_set()
+
+        # Wait for dialog to be dismissed; after it's destroyed check if we have a connection
+        self.root.wait_window(dlg)
+
+        # Determine if login succeeded by checking status_var (set on success) or by trying to
+        # detect saved working state. Simpler: if status_var contains "Connected to", treat as success.
+        return bool(self.status_var.get().startswith("Connected to"))
+
+    def _attempt_login(self, url: str, username: str, password: str) -> (bool, Optional[str]):
+        """
+        Attempt to contact the repository URL and authenticate (if username provided).
+        Returns (success: bool, message: Optional[str]).
+        """
+        # Build svn info args. Use --trust-server-cert for HTTPS servers that need it.
+        args = ["info", url]
+
+        # Add credentials if provided
+        if username:
+            args.extend(["--username", username])
+        if password:
+            args.extend(["--password", password])
+
+        # Some servers present untrusted certs; add trust flag - best-effort
+        args.extend(["--trust-server-cert"])
+
+        # Run the command
+        try:
+            result = self.svn.run(args)
+        except Exception as e:
+            logging.debug(f"Login attempt exception: {e}")
+            return False, f"Failed to run SVN: {e}"
+
+        if result.exit_code == 0:
+            return True, None
+
+        # Analyze stderr for common failure reasons
+        stderr = (result.stderr or "").lower()
+        if "authorization failed" in stderr or "authentication failed" in stderr or "403" in stderr:
+            return False, "Authentication failed: invalid username/password"
+        if "e170013" in stderr or "could not connect to server" in stderr or "unable to connect" in stderr:
+            return False, "Connection failed: unable to reach repository URL"
+        if "certificate" in stderr or "ssl" in stderr:
+            # Inform user about certificate issues and suggest options
+            return False, "SSL/certificate issue when contacting repository (server certificate may be untrusted)"
+        # Generic error
+        return False, result.stderr.strip()[:800] if result.stderr else "Unknown error contacting repository"
 
     def _create_tooltip(self, widget: tk.Widget, text: str):
         """Create a simple tooltip for a widget."""

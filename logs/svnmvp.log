@@ -2,3 +2,5 @@
 2025-09-12 21:38:00,331 - root - ERROR - Failed to launch GUI: 'GUI' object has no attribute '_clear_log'
 2025-09-15 17:20:09,089 - root - ERROR - Failed to launch GUI: 'GUI' object has no attribute '_clear_log'
 2025-09-15 17:34:10,503 - root - INFO - Executing: svn info /Users/Justin.A-CTR.Martinez/Desktop/Projects/TAPMobile --non-interactive
+2025-09-15 17:56:17,177 - root - INFO - Executing: svn info https://svn.rmls.faa.gov:8443/svn/logging/ --username jmartinez --password *** --trust-server-cert --non-interactive
+2025-09-15 17:56:49,555 - root - INFO - Executing: svn info https://svn.rmls.faa.gov:8443/svn/logging/ --username jmartinez --password *** --trust-server-cert --non-interactive
