@@ -24,7 +24,7 @@ import time
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Callable, Tuple, Union
+from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
@@ -65,7 +65,7 @@ class AppPaths:
 class Theme(Enum):
     """UI theme options."""
     SYSTEM = "system"
-    LIGHT = "light" 
+    LIGHT = "light"
     DARK = "dark"
 
 
@@ -93,16 +93,16 @@ class ThemeColors:
 THEMES = {
     Theme.LIGHT: ThemeColors(
         bg="#ffffff", fg="#000000", select_bg="#0078d4", select_fg="#ffffff",
-        entry_bg="#ffffff", entry_fg="#000000", button_bg="#f0f0f0", 
-        button_fg="#000000", frame_bg="#f8f8f8", text_bg="#ffffff", 
-        text_fg="#000000", accent="#0078d4", error="#d83b01", 
+        entry_bg="#ffffff", entry_fg="#000000", button_bg="#f0f0f0",
+        button_fg="#000000", frame_bg="#f8f8f8", text_bg="#ffffff",
+        text_fg="#000000", accent="#0078d4", error="#d83b01",
         success="#107c10", warning="#ff8c00"
     ),
     Theme.DARK: ThemeColors(
         bg="#1e1e1e", fg="#ffffff", select_bg="#0078d4", select_fg="#ffffff",
-        entry_bg="#2d2d30", entry_fg="#ffffff", button_bg="#3c3c3c", 
-        button_fg="#ffffff", frame_bg="#252526", text_bg="#1e1e1e", 
-        text_fg="#ffffff", accent="#0078d4", error="#f85149", 
+        entry_bg="#2d2d30", entry_fg="#ffffff", button_bg="#3c3c3c",
+        button_fg="#ffffff", frame_bg="#252526", text_bg="#1e1e1e",
+        text_fg="#ffffff", accent="#0078d4", error="#f85149",
         success="#56d364", warning="#d29922"
     )
 }
@@ -119,7 +119,7 @@ class SvnResult:
     parsed_info: Optional[Dict[str, Any]] = None
 
 
-@dataclass 
+@dataclass
 class ActionParameter:
     """Parameter definition for SVN actions."""
     name: str
@@ -165,7 +165,7 @@ class Config:
     theme: str = Theme.SYSTEM.value
     pagination_size: int = 100
     diff_line_limit: int = 2000
-    blame_line_limit: int = 2000  
+    blame_line_limit: int = 2000
     use_keychain: bool = True
     auto_detect_wc: bool = True
     working_copies: List[Dict[str, str]] = field(default_factory=list)
@@ -180,10 +180,10 @@ class Config:
 # Default I18N strings (English)
 DEFAULT_I18N = {
     "app_title": "SVN MVP - SVN Management Tool",
-    "working_copies": "Working Copies", 
+    "working_copies": "Working Copies",
     "actions": "Actions",
     "activity": "Activity",
-    "repo_browser": "Repository Browser", 
+    "repo_browser": "Repository Browser",
     "settings": "Settings",
     "run": "Run",
     "cancel": "Cancel",
@@ -216,12 +216,12 @@ DEFAULT_I18N = {
 
 class ConfigManager:
     """Manages application configuration."""
-    
+
     def __init__(self, config_path: Path):
         self.config_path = config_path
         self._config = Config()
         self.load()
-    
+
     def load(self) -> None:
         """Load configuration from file."""
         if self.config_path.exists():
@@ -234,7 +234,7 @@ class ConfigManager:
                             setattr(self._config, key, value)
             except Exception as e:
                 logging.warning(f"Failed to load config: {e}")
-    
+
     def save(self) -> None:
         """Save configuration to file."""
         try:
@@ -242,7 +242,7 @@ class ConfigManager:
                 json.dump(asdict(self._config), f, indent=2)
         except Exception as e:
             logging.error(f"Failed to save config: {e}")
-    
+
     @property
     def config(self) -> Config:
         return self._config
@@ -250,12 +250,12 @@ class ConfigManager:
 
 class I18NManager:
     """Manages internationalization strings."""
-    
+
     def __init__(self, i18n_dir: Path):
         self.i18n_dir = i18n_dir
         self.strings = DEFAULT_I18N.copy()
         self.load("en")
-    
+
     def load(self, locale: str) -> None:
         """Load strings for given locale."""
         locale_file = self.i18n_dir / f"{locale}.json"
@@ -266,11 +266,11 @@ class I18NManager:
                     self.strings.update(data)
             except Exception as e:
                 logging.warning(f"Failed to load locale {locale}: {e}")
-    
+
     def get(self, key: str, default: Optional[str] = None) -> str:
         """Get localized string."""
         return self.strings.get(key, default or key)
-    
+
     def __getitem__(self, key: str) -> str:
         return self.get(key)
 
@@ -281,15 +281,15 @@ class I18NManager:
 
 class CredentialStore:
     """Manages credentials using macOS Keychain via security CLI."""
-    
+
     def __init__(self, use_keychain: bool = True):
         self.use_keychain = use_keychain and platform.system() == "Darwin"
-    
+
     def get_credential(self, service: str, account: str) -> Optional[str]:
         """Retrieve credential from keychain."""
         if not self.use_keychain:
             return None
-        
+
         try:
             cmd = [
                 "/usr/bin/security", "find-internet-password",
@@ -302,20 +302,20 @@ class CredentialStore:
                 return result.stdout.strip()
         except Exception as e:
             logging.debug(f"Failed to get credential: {e}")
-        
+
         return None
-    
+
     def set_credential(self, service: str, account: str, password: str) -> bool:
-        """Store credential in keychain.""" 
+        """Store credential in keychain."""
         if not self.use_keychain:
             return False
-        
+
         try:
             # Delete existing entry first
             self.delete_credential(service, account)
-            
+
             cmd = [
-                "/usr/bin/security", "add-internet-password", 
+                "/usr/bin/security", "add-internet-password",
                 "-s", service, "-a", account, "-w", password
             ]
             result = subprocess.run(
@@ -325,12 +325,12 @@ class CredentialStore:
         except Exception as e:
             logging.debug(f"Failed to set credential: {e}")
             return False
-    
+
     def delete_credential(self, service: str, account: str) -> bool:
         """Delete credential from keychain."""
         if not self.use_keychain:
             return False
-        
+
         try:
             cmd = [
                 "/usr/bin/security", "delete-internet-password",
@@ -351,43 +351,43 @@ class CredentialStore:
 
 class SvnRunner:
     """Wrapper for SVN command execution."""
-    
+
     def __init__(self, svn_binary: str = "svn", timeout: int = 300):
         self.svn_binary = svn_binary
         self.timeout = timeout
         self.credential_store = CredentialStore()
-        
+
         # Validate SVN binary
         if not self._validate_svn():
             raise ValueError(f"SVN binary not found or invalid: {svn_binary}")
-    
+
     def _validate_svn(self) -> bool:
         """Validate SVN binary exists and works."""
         try:
             result = subprocess.run(
-                [self.svn_binary, "--version"], 
+                [self.svn_binary, "--version"],
                 capture_output=True, text=True, timeout=10
             )
             return result.returncode == 0
         except:
             return False
-    
-    def run(self, args: List[str], cwd: Optional[str] = None, 
+
+    def run(self, args: List[str], cwd: Optional[str] = None,
             input_data: Optional[str] = None) -> SvnResult:
         """Execute SVN command and return structured result."""
         full_cmd = [self.svn_binary] + args + ["--non-interactive"]
         cmd_str = " ".join(full_cmd)
-        
+
         # Sanitize command string for logging (remove passwords)
         log_cmd = re.sub(r'(--password\s+)\S+', r'\1***', cmd_str)
         logging.info(f"Executing: {log_cmd}")
-        
+
         start_time = time.time()
         try:
             # Clean environment
             env = os.environ.copy()
             env.pop('SVN_EDITOR', None)
-            
+
             result = subprocess.run(
                 full_cmd,
                 cwd=cwd,
@@ -397,14 +397,14 @@ class SvnRunner:
                 timeout=self.timeout,
                 env=env
             )
-            
+
             elapsed = time.time() - start_time
-            
+
             # Parse svn info output if applicable
             parsed_info = None
             if "info" in args and result.returncode == 0:
                 parsed_info = self._parse_info_output(result.stdout)
-            
+
             return SvnResult(
                 stdout=result.stdout,
                 stderr=result.stderr,
@@ -413,7 +413,7 @@ class SvnRunner:
                 command=cmd_str,
                 parsed_info=parsed_info
             )
-            
+
         except subprocess.TimeoutExpired:
             elapsed = time.time() - start_time
             return SvnResult(
@@ -432,7 +432,7 @@ class SvnRunner:
                 elapsed=elapsed,
                 command=cmd_str
             )
-    
+
     def _parse_info_output(self, output: str) -> Dict[str, str]:
         """Parse svn info output into dictionary."""
         info = {}
@@ -441,7 +441,7 @@ class SvnRunner:
                 key, value = line.split(':', 1)
                 info[key.strip()] = value.strip()
         return info
-    
+
     def get_working_copy_info(self, path: str) -> Optional[WorkingCopy]:
         """Get working copy information."""
         result = self.run(["info", path])
@@ -459,12 +459,12 @@ class SvnRunner:
             except Exception as e:
                 logging.error(f"Failed to parse working copy info: {e}")
         return None
-    
+
     def is_working_copy(self, path: str) -> bool:
         """Check if path is an SVN working copy."""
         svn_dir = Path(path) / ".svn"
         return svn_dir.exists() and svn_dir.is_dir()
-    
+
     def has_uncommitted_changes(self, path: str) -> bool:
         """Return True if working copy at path has uncommitted changes."""
         # Use `svn status` --if output is non-empty then changes exist
@@ -519,14 +519,14 @@ class SvnRunner:
 
 class ActionRegistry:
     """Registry of all available SVN actions."""
-    
+
     def __init__(self):
         self.actions: Dict[str, ActionDefinition] = {}
         self._register_actions()
-    
+
     def _register_actions(self):
         """Register all SVN actions."""
-        
+
         # Basic workspace management
         self.register(ActionDefinition(
             id="checkout",
@@ -537,13 +537,13 @@ class ActionRegistry:
                 ActionParameter("url", "url", "Repository URL", "URL to check out from", True),
                 ActionParameter("dest", "path", "Destination", "Local directory path", True),
                 ActionParameter("revision", "string", "Revision", "Specific revision to checkout"),
-                ActionParameter("depth", "choice", "Depth", "Checkout depth", 
-                              choices=["infinity", "immediates", "files", "empty"]),
+                ActionParameter("depth", "choice", "Depth", "Checkout depth",
+                                choices=["infinity", "immediates", "files", "empty"]),
             ]
         ))
-        
+
         self.register(ActionDefinition(
-            id="update", 
+            id="update",
             label="Update",
             description="Update working copy to latest revision",
             category="workspace",
@@ -552,10 +552,10 @@ class ActionRegistry:
                 ActionParameter("revision", "string", "Revision", "Update to specific revision"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="status",
-            label="Status", 
+            label="Status",
             description="Show working copy status",
             category="workspace",
             parameters=[
@@ -564,11 +564,11 @@ class ActionRegistry:
                 ActionParameter("show_updates", "bool", "Show Updates", "Show out-of-date information"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="add",
             label="Add",
-            description="Add files or directories to version control", 
+            description="Add files or directories to version control",
             category="workspace",
             parameters=[
                 ActionParameter("path", "path", "Path", "File or directory to add", True),
@@ -576,22 +576,22 @@ class ActionRegistry:
                 ActionParameter("parents", "bool", "Parents", "Add parent directories as needed"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
-            id="delete", 
+            id="delete",
             label="Delete",
             description="Remove files or directories from version control",
-            category="workspace", 
+            category="workspace",
             parameters=[
                 ActionParameter("path", "path", "Path", "File or directory to delete", True),
                 ActionParameter("force", "bool", "Force", "Force deletion"),
                 ActionParameter("keep_local", "bool", "Keep Local", "Don't delete local files"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="move",
-            label="Move/Rename", 
+            label="Move/Rename",
             description="Move or rename files and directories",
             category="workspace",
             parameters=[
@@ -600,19 +600,19 @@ class ActionRegistry:
                 ActionParameter("force", "bool", "Force", "Force move"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="copy",
             label="Copy",
-            description="Copy files and directories", 
+            description="Copy files and directories",
             category="workspace",
             parameters=[
-                ActionParameter("src", "path", "Source", "Source path", True), 
+                ActionParameter("src", "path", "Source", "Source path", True),
                 ActionParameter("dest", "path", "Destination", "Destination path", True),
                 ActionParameter("revision", "string", "Revision", "Copy from specific revision"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="revert",
             label="Revert",
@@ -623,10 +623,10 @@ class ActionRegistry:
                 ActionParameter("recursive", "bool", "Recursive", "Revert recursively"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="cleanup",
-            label="Cleanup", 
+            label="Cleanup",
             description="Clean up working copy",
             category="workspace",
             parameters=[
@@ -634,7 +634,7 @@ class ActionRegistry:
                 ActionParameter("vacuum_pristines", "bool", "Vacuum Pristines", "Remove unreferenced pristines"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="resolve",
             label="Resolve",
@@ -643,11 +643,11 @@ class ActionRegistry:
             parameters=[
                 ActionParameter("path", "path", "Path", "Conflicted file path", True),
                 ActionParameter("accept", "choice", "Accept", "Resolution strategy",
-                              choices=["working", "base", "mine-conflict", "theirs-conflict", 
-                                     "mine-full", "theirs-full"]),
+                                choices=["working", "base", "mine-conflict", "theirs-conflict",
+                                        "mine-full", "theirs-full"]),
             ]
         ))
-        
+
         # Changes and commits
         self.register(ActionDefinition(
             id="diff",
@@ -661,10 +661,10 @@ class ActionRegistry:
                 ActionParameter("summarize", "bool", "Summarize", "Show summary only"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="commit",
-            label="Commit", 
+            label="Commit",
             description="Commit changes to repository",
             category="changes",
             parameters=[
@@ -673,9 +673,9 @@ class ActionRegistry:
                 ActionParameter("keep_locks", "bool", "Keep Locks", "Don't release locks"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
-            id="merge", 
+            id="merge",
             label="Merge",
             description="Merge changes between branches",
             category="changes",
@@ -688,12 +688,12 @@ class ActionRegistry:
                 ActionParameter("record_only", "bool", "Record Only", "Record merge without changes"),
             ]
         ))
-        
-        # History and inspection  
+
+        # History and inspection
         self.register(ActionDefinition(
             id="log",
             label="Log",
-            description="Show commit history", 
+            description="Show commit history",
             category="history",
             parameters=[
                 ActionParameter("path", "path", "Path", "File or directory path"),
@@ -703,19 +703,19 @@ class ActionRegistry:
                 ActionParameter("stop_on_copy", "bool", "Stop on Copy", "Don't cross copies"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="blame",
             label="Blame/Annotate",
             description="Show line-by-line authorship",
-            category="history", 
+            category="history",
             parameters=[
                 ActionParameter("path", "path", "File", "File to annotate", True),
                 ActionParameter("revision", "string", "Revision", "Specific revision"),
                 ActionParameter("force", "bool", "Force", "Show binary files"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="info",
             label="Info",
@@ -725,12 +725,12 @@ class ActionRegistry:
                 ActionParameter("path", "path", "Path", "File or directory path", True),
                 ActionParameter("revision", "string", "Revision", "Specific revision"),
                 ActionParameter("show_item", "choice", "Show Item", "Information to display",
-                              choices=["kind", "url", "relative-url", "repos-root-url", "repos-uuid",
-                                     "revision", "last-changed-revision", "last-changed-date", 
-                                     "last-changed-author"]),
+                                choices=["kind", "url", "relative-url", "repos-root-url", "repos-uuid",
+                                         "revision", "last-changed-revision", "last-changed-date",
+                                         "last-changed-author"]),
             ]
         ))
-        
+
         # Repository operations
         self.register(ActionDefinition(
             id="list",
@@ -739,12 +739,12 @@ class ActionRegistry:
             category="repository",
             parameters=[
                 ActionParameter("url", "url", "URL", "Repository URL", True),
-                ActionParameter("revision", "string", "Revision", "Specific revision"), 
+                ActionParameter("revision", "string", "Revision", "Specific revision"),
                 ActionParameter("verbose", "bool", "Verbose", "Show detailed information"),
                 ActionParameter("recursive", "bool", "Recursive", "List recursively"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="mkdir",
             label="Make Directory",
@@ -756,25 +756,25 @@ class ActionRegistry:
                 ActionParameter("parents", "bool", "Parents", "Create parent directories"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="import",
-            label="Import", 
+            label="Import",
             description="Import files into repository",
             category="repository",
             parameters=[
                 ActionParameter("path", "path", "Local Path", "Local directory to import", True),
-                ActionParameter("url", "url", "Repository URL", "Destination URL", True), 
+                ActionParameter("url", "url", "Repository URL", "Destination URL", True),
                 ActionParameter("message", "string", "Message", "Commit message", True),
                 ActionParameter("no_ignore", "bool", "No Ignore", "Don't ignore files matching global ignore patterns"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="export",
             label="Export",
             description="Export clean directory tree",
-            category="repository", 
+            category="repository",
             parameters=[
                 ActionParameter("url", "url", "Source URL", "Repository URL to export", True),
                 ActionParameter("dest", "path", "Destination", "Local destination path", True),
@@ -782,12 +782,12 @@ class ActionRegistry:
                 ActionParameter("force", "bool", "Force", "Overwrite existing files"),
             ]
         ))
-        
+
         # Property operations
         self.register(ActionDefinition(
             id="proplist",
             label="List Properties",
-            description="List properties on files and directories", 
+            description="List properties on files and directories",
             category="properties",
             advanced=True,
             parameters=[
@@ -797,7 +797,7 @@ class ActionRegistry:
                 ActionParameter("revprop", "bool", "Revision Properties", "Show revision properties"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="propget",
             label="Get Property",
@@ -811,9 +811,9 @@ class ActionRegistry:
                 ActionParameter("strict", "bool", "Strict", "Don't print newline"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
-            id="propset", 
+            id="propset",
             label="Set Property",
             description="Set property on files and directories",
             category="properties",
@@ -821,12 +821,12 @@ class ActionRegistry:
             parameters=[
                 ActionParameter("propname", "string", "Property Name", "Name of property", True),
                 ActionParameter("propval", "string", "Property Value", "Value of property", True),
-                ActionParameter("path", "path", "Path", "File or directory path", True), 
+                ActionParameter("path", "path", "Path", "File or directory path", True),
                 ActionParameter("recursive", "bool", "Recursive", "Apply recursively"),
                 ActionParameter("force", "bool", "Force", "Force operation"),
             ]
         ))
-        
+
         # Locking
         self.register(ActionDefinition(
             id="lock",
@@ -840,9 +840,9 @@ class ActionRegistry:
                 ActionParameter("force", "bool", "Force", "Steal existing lock"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
-            id="unlock", 
+            id="unlock",
             label="Unlock",
             description="Unlock files in repository",
             category="locking",
@@ -852,7 +852,7 @@ class ActionRegistry:
                 ActionParameter("force", "bool", "Force", "Break lock"),
             ]
         ))
-        
+
         # Advanced operations
         self.register(ActionDefinition(
             id="switch",
@@ -868,10 +868,10 @@ class ActionRegistry:
                 ActionParameter("ignore_ancestry", "bool", "Ignore Ancestry", "Ignore ancestry"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="relocate",
-            label="Relocate", 
+            label="Relocate",
             description="Relocate working copy to new repository URL",
             category="advanced",
             advanced=True,
@@ -881,12 +881,12 @@ class ActionRegistry:
                 ActionParameter("path", "path", "Path", "Working copy path", True),
             ]
         ))
-        
+
         # Composite workflow actions
         self.register(ActionDefinition(
             id="branch-create",
             label="Create Feature Branch",
-            description="Create a new feature branch from trunk", 
+            description="Create a new feature branch from trunk",
             category="workflows",
             composite=True,
             parameters=[
@@ -896,12 +896,12 @@ class ActionRegistry:
                 ActionParameter("from_path", "string", "Source Path", "Source path (default: trunk)", default="trunk"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="branch-sync",
             label="Sync Branch with Trunk",
             description="Merge trunk changes into feature branch",
-            category="workflows", 
+            category="workflows",
             composite=True,
             parameters=[
                 ActionParameter("branch_path", "path", "Branch Working Copy", "Feature branch working copy", True),
@@ -909,13 +909,13 @@ class ActionRegistry:
                 ActionParameter("dry_run", "bool", "Dry Run", "Show what would be merged"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="branch-merge-to-trunk",
             label="Merge Branch to Trunk",
             description="Merge feature branch back into trunk",
             category="workflows",
-            composite=True, 
+            composite=True,
             parameters=[
                 ActionParameter("trunk_path", "path", "Trunk Working Copy", "Trunk working copy", True),
                 ActionParameter("branch_url", "url", "Branch URL", "Feature branch URL", True),
@@ -924,7 +924,7 @@ class ActionRegistry:
                 ActionParameter("record_only", "bool", "Record Only", "Record merge without changes"),
             ]
         ))
-        
+
         self.register(ActionDefinition(
             id="tag-create",
             label="Create Release Tag",
@@ -938,23 +938,23 @@ class ActionRegistry:
                 ActionParameter("from_path", "string", "Source Path", "Source path (default: trunk)", default="trunk"),
             ]
         ))
-    
+
     def register(self, action: ActionDefinition):
         """Register an action."""
         self.actions[action.id] = action
-    
+
     def get(self, action_id: str) -> Optional[ActionDefinition]:
         """Get action by ID."""
         return self.actions.get(action_id)
-    
+
     def get_by_category(self, category: str) -> List[ActionDefinition]:
         """Get actions by category."""
         return [a for a in self.actions.values() if a.category == category]
-    
+
     def get_basic_actions(self) -> List[ActionDefinition]:
         """Get basic (non-advanced) actions."""
         return [a for a in self.actions.values() if not a.advanced]
-    
+
     def get_all_actions(self) -> List[ActionDefinition]:
         """Get all actions."""
         return list(self.actions.values())
@@ -966,49 +966,48 @@ class ActionRegistry:
 
 class WorkflowExecutor:
     """Executes composite workflow actions."""
-    
+
     def __init__(self, svn_runner: SvnRunner, config: Config):
         self.svn = svn_runner
         self.config = config
-    
+
     def execute_branch_create(self, params: Dict[str, Any]) -> SvnResult:
         """Create feature branch from trunk."""
         repo_root = params["repo_root"].rstrip("/")
-        branch_name = params["name"] 
+        branch_name = params["name"]
         message = params["message"]
         from_path = params.get("from_path", self.config.default_trunk_path)
-        
+
         source_url = f"{repo_root}/{from_path}"
         dest_url = f"{repo_root}/{self.config.default_branches_path}/{branch_name}"
-        
+
         return self.svn.run([
-            "copy", source_url, dest_url, 
+            "copy", source_url, dest_url,
             "-m", message
         ])
-    
+
     def execute_branch_sync(self, params: Dict[str, Any]) -> SvnResult:
         """Sync branch with trunk."""
         branch_path = params["branch_path"]
         trunk_url = params.get("trunk_url")
         dry_run = params.get("dry_run", False)
-        
+
         # Auto-detect trunk URL if not provided
         if not trunk_url:
             wc_info = self.svn.get_working_copy_info(branch_path)
             if not wc_info:
                 return SvnResult("", "Failed to get working copy info", 1, 0, "branch-sync")
-            
+
             # Assume standard layout: replace /branches/... with /trunk
-            branch_url = wc_info.url
             repo_root = wc_info.repository_root
             trunk_url = f"{repo_root}/{self.config.default_trunk_path}"
-        
+
         args = ["merge", trunk_url, branch_path]
         if dry_run:
             args.append("--dry-run")
-        
+
         return self.svn.run(args)
-    
+
     def execute_branch_merge_to_trunk(self, params: Dict[str, Any]) -> SvnResult:
         """Merge branch back to trunk."""
         trunk_path = params["trunk_path"]
@@ -1016,26 +1015,26 @@ class WorkflowExecutor:
         message = params["message"]
         dry_run = params.get("dry_run", False)
         record_only = params.get("record_only", False)
-        
+
         args = ["merge", branch_url, trunk_path, "-m", message]
         if dry_run:
             args.append("--dry-run")
         if record_only:
             args.append("--record-only")
-        
+
         return self.svn.run(args)
-    
+
     def execute_tag_create(self, params: Dict[str, Any]) -> SvnResult:
-        """Create release tag.""" 
+        """Create release tag."""
         repo_root = params["repo_root"].rstrip("/")
         version = params["version"]
-        message = params["message"] 
+        message = params["message"]
         from_path = params.get("from_path", self.config.default_trunk_path)
-        
+
         source_url = f"{repo_root}/{from_path}"
         tag_name = f"release-{version}" if not version.startswith("release-") else version
         dest_url = f"{repo_root}/{self.config.default_tags_path}/{tag_name}"
-        
+
         return self.svn.run([
             "copy", source_url, dest_url,
             "-m", message
@@ -1043,21 +1042,21 @@ class WorkflowExecutor:
 
 
 # =============================================================================
-# 7. CONCURRENCY & JOB CONTROL  
+# 7. CONCURRENCY & JOB CONTROL
 # =============================================================================
 
 class JobManager:
     """Manages concurrent job execution with per-WC mutexes."""
-    
+
     def __init__(self):
         self.active_jobs: Dict[str, threading.Event] = {}
         self.job_lock = threading.Lock()
-    
+
     def can_start_job(self, working_copy: str) -> bool:
         """Check if a job can be started for the working copy."""
         with self.job_lock:
             return working_copy not in self.active_jobs
-    
+
     def start_job(self, working_copy: str) -> bool:
         """Start a job for the working copy."""
         with self.job_lock:
@@ -1065,19 +1064,19 @@ class JobManager:
                 return False
             self.active_jobs[working_copy] = threading.Event()
             return True
-    
+
     def finish_job(self, working_copy: str):
         """Finish a job for the working copy."""
         with self.job_lock:
             if working_copy in self.active_jobs:
                 self.active_jobs[working_copy].set()
                 del self.active_jobs[working_copy]
-    
+
     def is_job_active(self, working_copy: str) -> bool:
         """Check if a job is active for the working copy."""
         with self.job_lock:
             return working_copy in self.active_jobs
-    
+
     def cancel_job(self, working_copy: str):
         """Cancel a job for the working copy."""
         with self.job_lock:
@@ -1093,11 +1092,11 @@ def setup_logging(log_file: Path, log_level: str = "INFO"):
     """Setup logging configuration."""
     log_level_map = {
         "DEBUG": logging.DEBUG,
-        "INFO": logging.INFO, 
+        "INFO": logging.INFO,
         "WARNING": logging.WARNING,
         "ERROR": logging.ERROR
     }
-    
+
     logging.basicConfig(
         level=log_level_map.get(log_level.upper(), logging.INFO),
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -1114,93 +1113,93 @@ def setup_logging(log_file: Path, log_level: str = "INFO"):
 
 class CLI:
     """Command-line interface."""
-    
+
     def __init__(self):
         self.paths = AppPaths()
         self.config_manager = ConfigManager(self.paths.config_file)
-        self.i18n = I18NManager(self.paths.i18n_dir) 
+        self.i18n = I18NManager(self.paths.i18n_dir)
         self.registry = ActionRegistry()
         self.svn = SvnRunner(self.config_manager.config.svn_binary_path)
         self.workflows = WorkflowExecutor(self.svn, self.config_manager.config)
-    
+
     def create_parser(self) -> argparse.ArgumentParser:
         """Create argument parser."""
         parser = argparse.ArgumentParser(
             description="SVN Management Tool",
             formatter_class=argparse.RawDescriptionHelpFormatter
         )
-        
+
         parser.add_argument("--version", action="version", version=f"{APP_NAME} {VERSION}")
         parser.add_argument("--gui", action="store_true", help="Launch GUI")
         parser.add_argument("--svn-binary", help="Path to SVN binary")
         parser.add_argument("--config", help="Config file path")
-        parser.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR"], 
-                          default="INFO", help="Log level")
+        parser.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+                            default="INFO", help="Log level")
         parser.add_argument("--json", action="store_true", help="Output in JSON format")
         parser.add_argument("--timeout", type=int, default=300, help="Command timeout")
         parser.add_argument("--no-keychain", action="store_true", help="Disable keychain")
-        
+
         subparsers = parser.add_subparsers(dest="command", help="Available commands")
-        
+
         # Add subcommands for each action
         for action in self.registry.get_all_actions():
             self._add_action_subparser(subparsers, action)
-        
+
         return parser
-    
-    def _add_action_subparser(self, subparsers: argparse._SubParsersAction, 
-                            action: ActionDefinition):
+
+    def _add_action_subparser(self, subparsers: argparse._SubParsersAction,
+                              action: ActionDefinition):
         """Add subparser for an action."""
         subparser = subparsers.add_parser(
-            action.id, 
+            action.id,
             help=action.description,
             aliases=[action.id.replace("-", "_")]
         )
-        
+
         for param in action.parameters:
             args = [f"--{param.name}"]
             kwargs = {"help": param.description}
-            
+
             if param.required:
                 kwargs["required"] = True
             if param.default is not None:
                 kwargs["default"] = param.default
-            
+
             if param.type == "bool":
                 kwargs["action"] = "store_true"
             elif param.type == "int":
                 kwargs["type"] = int
             elif param.type == "choice":
                 kwargs["choices"] = param.choices
-            
+
             subparser.add_argument(*args, **kwargs)
-    
+
     def run(self, args: Optional[List[str]] = None) -> int:
         """Run CLI with given arguments."""
         parser = self.create_parser()
         parsed_args = parser.parse_args(args)
-        
+
         # Setup logging
         setup_logging(self.paths.log_file, parsed_args.log_level)
-        
+
         # Launch GUI if no command specified or --gui flag
         if not parsed_args.command or parsed_args.gui:
             return self._launch_gui()
-        
+
         # Override config if needed
         if parsed_args.svn_binary:
             self.config_manager.config.svn_binary_path = parsed_args.svn_binary
         if parsed_args.no_keychain:
             self.config_manager.config.use_keychain = False
-        
+
         # Execute command
         return self._execute_command(parsed_args)
-    
+
     def _launch_gui(self) -> int:
         """Launch GUI."""
         try:
             gui = GUI(
-                self.paths, self.config_manager, self.i18n, 
+                self.paths, self.config_manager, self.i18n,
                 self.registry, self.svn, self.workflows
             )
             gui.run()
@@ -1208,28 +1207,28 @@ class CLI:
         except Exception as e:
             logging.error(f"Failed to launch GUI: {e}")
             return 1
-    
+
     def _execute_command(self, args: argparse.Namespace) -> int:
         """Execute CLI command."""
         action = self.registry.get(args.command)
         if not action:
             logging.error(f"Unknown command: {args.command}")
             return 1
-        
+
         # Build parameters
         params = {}
         for param in action.parameters:
             value = getattr(args, param.name, param.default)
             if value is not None:
                 params[param.name] = value
-        
+
         # Execute action
         try:
             if action.composite:
                 result = self._execute_workflow(action.id, params)
             else:
                 result = self._execute_svn_action(action.id, params)
-            
+
             # Output result
             if args.json:
                 output = {
@@ -1245,13 +1244,13 @@ class CLI:
                     print(result.stdout)
                 if result.stderr:
                     print(result.stderr, file=sys.stderr)
-            
+
             return result.exit_code
-            
+
         except Exception as e:
             logging.error(f"Failed to execute command: {e}")
             return 1
-    
+
     def _execute_workflow(self, workflow_id: str, params: Dict[str, Any]) -> SvnResult:
         """Execute workflow action."""
         if workflow_id == "branch-create":
@@ -1264,22 +1263,22 @@ class CLI:
             return self.workflows.execute_tag_create(params)
         else:
             raise ValueError(f"Unknown workflow: {workflow_id}")
-    
+
     def _execute_svn_action(self, action_id: str, params: Dict[str, Any]) -> SvnResult:
-        """Execute SVN action.""" 
+        """Execute SVN action."""
         args = [action_id]
-        
+
         # Convert parameters to SVN arguments
         for key, value in params.items():
             if value is None:
                 continue
-            
+
             if isinstance(value, bool):
                 if value:
                     args.append(f"--{key}")
             else:
                 args.extend([f"--{key}", str(value)])
-        
+
         return self.svn.run(args)
 
 
@@ -1289,9 +1288,9 @@ class CLI:
 
 class GUI:
     """Tkinter-based graphical user interface."""
-    
-    def __init__(self, paths: AppPaths, config_manager: ConfigManager, 
-                 i18n: I18NManager, registry: ActionRegistry, 
+
+    def __init__(self, paths: AppPaths, config_manager: ConfigManager,
+                 i18n: I18NManager, registry: ActionRegistry,
                  svn: SvnRunner, workflows: WorkflowExecutor):
         self.paths = paths
         self.config_manager = config_manager
@@ -1300,7 +1299,7 @@ class GUI:
         self.svn = svn
         self.workflows = workflows
         self.job_manager = JobManager()
-        
+
         # GUI state
         self.root = None
         self.current_theme = Theme.SYSTEM
@@ -1308,7 +1307,7 @@ class GUI:
         self.show_advanced = None
         self.selected_wc = None
         self.working_copies: Dict[str, WorkingCopy] = {}
-        
+
         # GUI components
         self.wc_listbox = None
         self.action_combobox = None
@@ -1317,10 +1316,10 @@ class GUI:
         self.log_text = None
         self.progress_var = None
         self.status_var = None
-        
+
         # Message queue for thread communication
         self.message_queue = queue.Queue()
-    
+
     def run(self):
         """Start the GUI."""
         self.root = tk.Tk()
@@ -1332,21 +1331,21 @@ class GUI:
         self.selected_wc = tk.StringVar(master=self.root)
         self.progress_var = tk.StringVar(master=self.root)
         self.status_var = tk.StringVar(master=self.root)
-        
+
         # Detect and set system theme
         self._detect_system_theme()
         self._setup_ui()
         self._apply_theme()
         self._discover_working_copies()
-        
+
         # Start message queue processor
         self.root.after(100, self._process_message_queue)
-        
+
         # Handle window close
         self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
-        
+
         self.root.mainloop()
-    
+
     def _detect_system_theme(self):
         """Detect system theme preference."""
         try:
@@ -1354,216 +1353,216 @@ class GUI:
             result = subprocess.run([
                 "defaults", "read", "-g", "AppleInterfaceStyle"
             ], capture_output=True, text=True)
-            
+
             if result.returncode == 0 and "dark" in result.stdout.lower():
                 self.current_theme = Theme.DARK
             else:
                 self.current_theme = Theme.LIGHT
         except:
             self.current_theme = Theme.LIGHT
-        
+
         # Override with user preference
         config_theme = self.config_manager.config.theme
         if config_theme in [t.value for t in Theme]:
             if config_theme != Theme.SYSTEM.value:
                 self.current_theme = Theme(config_theme)
-    
+
     def _setup_ui(self):
         """Setup the user interface."""
         # Create main paned window
         main_paned = ttk.PanedWindow(self.root, orient=tk.HORIZONTAL)
         main_paned.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
         # Left panel - Working Copies
         left_frame = ttk.Frame(main_paned)
         main_paned.add(left_frame, weight=1)
-        
+
         self._setup_left_panel(left_frame)
-        
+
         # Right panel - Tabs
-        right_frame = ttk.Frame(main_paned) 
+        right_frame = ttk.Frame(main_paned)
         main_paned.add(right_frame, weight=2)
-        
+
         self._setup_right_panel(right_frame)
-        
+
         # Bottom status bar
         status_frame = ttk.Frame(self.root)
         status_frame.pack(fill=tk.X, side=tk.BOTTOM)
-        
+
         ttk.Label(status_frame, textvariable=self.status_var).pack(side=tk.LEFT, padx=5)
         ttk.Label(status_frame, textvariable=self.progress_var).pack(side=tk.RIGHT, padx=5)
-    
+
     def _setup_left_panel(self, parent: ttk.Frame):
         """Setup working copies panel."""
         # Title and controls
         title_frame = ttk.Frame(parent)
         title_frame.pack(fill=tk.X, padx=5, pady=5)
-        
-        ttk.Label(title_frame, text=self.i18n["working_copies"], 
-                 font=("", 12, "bold")).pack(side=tk.LEFT)
-        
+
+        ttk.Label(title_frame, text=self.i18n["working_copies"],
+                  font=("", 12, "bold")).pack(side=tk.LEFT)
+
         # Buttons
         btn_frame = ttk.Frame(title_frame)
         btn_frame.pack(side=tk.RIGHT)
-        
-        ttk.Button(btn_frame, text="+", width=3, 
-                  command=self._add_working_copy).pack(side=tk.LEFT, padx=2)
+
+        ttk.Button(btn_frame, text="+", width=3,
+                   command=self._add_working_copy).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="-", width=3,
-                  command=self._remove_working_copy).pack(side=tk.LEFT, padx=2)
+                   command=self._remove_working_copy).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="↻", width=3,
-                  command=self._refresh_working_copies).pack(side=tk.LEFT, padx=2)
-        
+                   command=self._refresh_working_copies).pack(side=tk.LEFT, padx=2)
+
         # Working copies list
         list_frame = ttk.Frame(parent)
         list_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
-        
+
         # Listbox with scrollbar
         scrollbar = ttk.Scrollbar(list_frame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
+
         self.wc_listbox = tk.Listbox(list_frame, yscrollcommand=scrollbar.set)
         self.wc_listbox.pack(fill=tk.BOTH, expand=True)
         self.wc_listbox.bind('<<ListboxSelect>>', self._on_wc_select)
-        
+
         scrollbar.config(command=self.wc_listbox.yview)
-    
+
     def _setup_right_panel(self, parent: ttk.Frame):
-        """Setup tabbed right panel.""" 
+        """Setup tabbed right panel."""
         notebook = ttk.Notebook(parent)
         notebook.pack(fill=tk.BOTH, expand=True)
-        
+
         # Actions tab
         actions_frame = ttk.Frame(notebook)
         notebook.add(actions_frame, text=self.i18n["actions"])
         self._setup_actions_tab(actions_frame)
-        
+
         # Activity tab
         activity_frame = ttk.Frame(notebook)
         notebook.add(activity_frame, text=self.i18n["activity"])
         self._setup_activity_tab(activity_frame)
-        
+
         # Repository Browser tab
         repo_frame = ttk.Frame(notebook)
         notebook.add(repo_frame, text=self.i18n["repo_browser"])
         self._setup_repo_browser_tab(repo_frame)
-        
+
         # Settings tab
         settings_frame = ttk.Frame(notebook)
         notebook.add(settings_frame, text=self.i18n["settings"])
         self._setup_settings_tab(settings_frame)
-    
+
     def _setup_actions_tab(self, parent: ttk.Frame):
         """Setup actions tab."""
         # Action selection
         selection_frame = ttk.Frame(parent)
         selection_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         ttk.Label(selection_frame, text="Action:").pack(side=tk.LEFT)
-        
+
         self.action_combobox = ttk.Combobox(selection_frame, state="readonly")
         self.action_combobox.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(10, 0))
         self.action_combobox.bind('<<ComboboxSelected>>', self._on_action_select)
-        
+
         # Advanced toggle
         advanced_frame = ttk.Frame(parent)
         advanced_frame.pack(fill=tk.X, padx=10)
-        
+
         ttk.Checkbutton(advanced_frame, text=self.i18n["show_advanced"],
-                       variable=self.show_advanced,
-                       command=self._update_action_list).pack(side=tk.LEFT)
-        
+                        variable=self.show_advanced,
+                        command=self._update_action_list).pack(side=tk.LEFT)
+
         # Parameters frame
         self.param_frame = ttk.LabelFrame(parent, text="Parameters")
         self.param_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+
         # Control buttons
         button_frame = ttk.Frame(parent)
         button_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         ttk.Button(button_frame, text=self.i18n["run"],
-                  command=self._execute_action).pack(side=tk.LEFT, padx=5)
+                   command=self._execute_action).pack(side=tk.LEFT, padx=5)
         ttk.Button(button_frame, text=self.i18n["cancel"],
-                  command=self._cancel_action).pack(side=tk.LEFT, padx=5)
-        
+                   command=self._cancel_action).pack(side=tk.LEFT, padx=5)
+
         self._update_action_list()
-    
+
     def _setup_activity_tab(self, parent: ttk.Frame):
         """Setup activity/logs tab."""
         # Log display
         self.log_text = scrolledtext.ScrolledText(parent, wrap=tk.WORD, state=tk.DISABLED)
         self.log_text.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-        
+
         # Log controls
         controls_frame = ttk.Frame(parent)
         controls_frame.pack(fill=tk.X, padx=10, pady=5)
-        
+
         ttk.Button(controls_frame, text="Clear",
-                  command=self._clear_log).pack(side=tk.LEFT, padx=5)
+                   command=self._clear_log).pack(side=tk.LEFT, padx=5)
         ttk.Button(controls_frame, text="Save Log",
-                  command=self._save_log).pack(side=tk.LEFT, padx=5)
-    
+                   command=self._save_log).pack(side=tk.LEFT, padx=5)
+
     def _setup_repo_browser_tab(self, parent: ttk.Frame):
         """Setup repository browser tab."""
         info_frame = ttk.LabelFrame(parent, text="Repository Information")
         info_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         self.repo_info_text = tk.Text(info_frame, height=6, state=tk.DISABLED)
         self.repo_info_text.pack(fill=tk.X, padx=5, pady=5)
-        
+
         # Quick actions
         quick_frame = ttk.LabelFrame(parent, text="Quick Actions")
         quick_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         ttk.Button(quick_frame, text="Browse Trunk",
-                  command=lambda: self._browse_repo_path("trunk")).pack(side=tk.LEFT, padx=5, pady=5)
-        ttk.Button(quick_frame, text="Browse Branches", 
-                  command=lambda: self._browse_repo_path("branches")).pack(side=tk.LEFT, padx=5, pady=5)
+                   command=lambda: self._browse_repo_path("trunk")).pack(side=tk.LEFT, padx=5, pady=5)
+        ttk.Button(quick_frame, text="Browse Branches",
+                   command=lambda: self._browse_repo_path("branches")).pack(side=tk.LEFT, padx=5, pady=5)
         ttk.Button(quick_frame, text="Browse Tags",
-                  command=lambda: self._browse_repo_path("tags")).pack(side=tk.LEFT, padx=5, pady=5)
-    
+                   command=lambda: self._browse_repo_path("tags")).pack(side=tk.LEFT, padx=5, pady=5)
+
     def _setup_settings_tab(self, parent: ttk.Frame):
-        """Setup settings tab.""" 
+        """Setup settings tab."""
         # SVN binary path
         binary_frame = ttk.LabelFrame(parent, text=self.i18n["svn_binary_path"])
         binary_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         self.binary_var = tk.StringVar(value=self.config_manager.config.svn_binary_path)
         binary_entry = ttk.Entry(binary_frame, textvariable=self.binary_var)
         binary_entry.pack(fill=tk.X, padx=5, pady=5)
-        
+
         ttk.Button(binary_frame, text="Browse...",
-                  command=self._browse_svn_binary).pack(pady=5)
-        
+                   command=self._browse_svn_binary).pack(pady=5)
+
         # Theme settings
         theme_frame = ttk.LabelFrame(parent, text=self.i18n["theme"])
         theme_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         self.theme_var = tk.StringVar(value=self.config_manager.config.theme)
         for theme in Theme:
-            ttk.Radiobutton(theme_frame, text=theme.value.title(), 
-                          variable=self.theme_var, value=theme.value,
-                          command=self._change_theme).pack(anchor=tk.W, padx=5, pady=2)
-        
+            ttk.Radiobutton(theme_frame, text=theme.value.title(),
+                            variable=self.theme_var, value=theme.value,
+                            command=self._change_theme).pack(anchor=tk.W, padx=5, pady=2)
+
         # Other settings
         other_frame = ttk.LabelFrame(parent, text="Other Settings")
         other_frame.pack(fill=tk.X, padx=10, pady=10)
-        
+
         self.keychain_var = tk.BooleanVar(value=self.config_manager.config.use_keychain)
         ttk.Checkbutton(other_frame, text=self.i18n["use_keychain"],
-                       variable=self.keychain_var,
-                       command=self._save_settings).pack(anchor=tk.W, padx=5, pady=2)
-        
+                        variable=self.keychain_var,
+                        command=self._save_settings).pack(anchor=tk.W, padx=5, pady=2)
+
         # Save button
         ttk.Button(parent, text="Save Settings",
-                  command=self._save_settings).pack(pady=20)
-    
+                   command=self._save_settings).pack(pady=20)
+
     def _update_action_list(self):
         """Update the action combobox."""
         if self.show_advanced.get():
             actions = self.registry.get_all_actions()
         else:
             actions = self.registry.get_basic_actions()
-        
+
         # Group by category
         action_names = []
         categories = {}
@@ -1571,52 +1570,52 @@ class GUI:
             if action.category not in categories:
                 categories[action.category] = []
             categories[action.category].append(action.label)
-        
+
         # Build flat list with category headers
         for category, items in categories.items():
             action_names.append(f"--- {category.title()} ---")
             action_names.extend(sorted(items))
-        
+
         self.action_combobox['values'] = action_names
-    
+
     def _on_action_select(self, event):
         """Handle action selection."""
         selection = self.action_combobox.get()
         if selection.startswith("---"):
             return
-        
+
         # Find action by label
         action = None
         for a in self.registry.get_all_actions():
             if a.label == selection:
                 action = a
                 break
-        
+
         if action:
             self._setup_parameter_widgets(action)
-    
+
     def _setup_parameter_widgets(self, action: ActionDefinition):
         """Setup parameter input widgets for action."""
         # Clear existing widgets
         for widget in self.param_frame.winfo_children():
             widget.destroy()
         self.param_widgets.clear()
-        
+
         if not action.parameters:
             ttk.Label(self.param_frame, text="No parameters required").pack(pady=20)
             return
-        
+
         # Create widgets for each parameter
         for i, param in enumerate(action.parameters):
             row_frame = ttk.Frame(self.param_frame)
             row_frame.pack(fill=tk.X, padx=5, pady=5)
-            
+
             # Label
             label_text = param.label
             if param.required:
                 label_text += " *"
             ttk.Label(row_frame, text=label_text, width=20).pack(side=tk.LEFT)
-            
+
             # Input widget based on parameter type
             if param.type == "bool":
                 var = tk.BooleanVar(value=param.default or False)
@@ -1633,22 +1632,23 @@ class GUI:
             elif param.type == "path":
                 var = tk.StringVar(value=param.default or "")
                 widget = ttk.Entry(row_frame, textvariable=var)
-                
+
                 # Add browse button
                 ttk.Button(row_frame, text="Browse...",
-                          command=lambda p=param, v=var: self._browse_path(p, v)).pack(side=tk.RIGHT, padx=5)
-                
+                           command=lambda p=param, v=var: self._browse_path(p, v)).pack(side=tk.RIGHT, padx=5)
+
                 self.param_widgets[param.name] = var
             else:  # string, url
                 var = tk.StringVar(value=param.default or "")
                 widget = ttk.Entry(row_frame, textvariable=var)
+                self.param_widgets[param.name] = var
             # Pack the input widget into the row
             widget.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
             # Add help tooltip if description exists
             if param.description:
                 self._create_tooltip(widget, param.description)
-    
+
     def _browse_path(self, param: ActionParameter, var: tk.StringVar):
         """Browse for file or directory path."""
         if param.type == "path":
@@ -1657,10 +1657,10 @@ class GUI:
             else:
                 filetypes = param.file_types or [("All files", "*.*")]
                 path = filedialog.askopenfilename(filetypes=filetypes)
-            
+
             if path:
                 var.set(path)
-    
+
     def _create_tooltip(self, widget: tk.Widget, text: str):
         """Create a simple tooltip for a widget."""
         def show_tooltip(event):
@@ -1668,109 +1668,109 @@ class GUI:
             tooltip.wm_overrideredirect(True)
             tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
             label = ttk.Label(tooltip, text=text, background="lightyellow",
-                            relief="solid", borderwidth=1)
+                              relief="solid", borderwidth=1)
             label.pack()
             widget.tooltip = tooltip
-        
+
         def hide_tooltip(event):
             if hasattr(widget, 'tooltip'):
                 widget.tooltip.destroy()
                 delattr(widget, 'tooltip')
-        
+
         widget.bind("<Enter>", show_tooltip)
         widget.bind("<Leave>", hide_tooltip)
-    
+
     def _execute_action(self):
         """Execute the selected action."""
         selection = self.action_combobox.get()
         if not selection or selection.startswith("---"):
             messagebox.showwarning(self.i18n["warning"], "Please select an action")
             return
-        
+
         # Find selected working copy
         if not self.selected_wc.get():
             messagebox.showwarning(self.i18n["warning"], self.i18n["no_wc_selected"])
             return
-        
+
         wc_path = self.selected_wc.get()
-        
+
         # Check if working copy is busy
         if self.job_manager.is_job_active(wc_path):
             messagebox.showwarning(self.i18n["warning"], self.i18n["wc_busy"])
             return
-        
+
         # Find action definition
         action = None
         for a in self.registry.get_all_actions():
             if a.label == selection:
                 action = a
                 break
-        
+
         if not action:
             messagebox.showerror(self.i18n["error"], f"Action not found: {selection}")
             return
-        
+
         # Collect parameters
         params = self._collect_parameters(action)
         if params is None:  # Validation failed
             return
-        
+
         # Start background execution
         self._start_background_action(action, wc_path, params)
-    
+
     def _collect_parameters(self, action: ActionDefinition) -> Optional[Dict[str, Any]]:
         """Collect and validate parameter values."""
         params = {}
-        
+
         for param in action.parameters:
             if param.name not in self.param_widgets:
                 continue
-            
+
             widget_var = self.param_widgets[param.name]
-            
+
             if param.type == "bool":
                 value = widget_var.get()
             else:
                 value = widget_var.get().strip()
-            
+
             # Validate required parameters
             if param.required and not value:
-                messagebox.showerror(self.i18n["error"], 
-                                   f"Required parameter '{param.label}' is missing")
+                messagebox.showerror(self.i18n["error"],
+                                     f"Required parameter '{param.label}' is missing")
                 return None
-            
+
             # Type validation
             if value:
                 if param.type == "int":
                     try:
                         value = int(value)
                     except ValueError:
-                        messagebox.showerror(self.i18n["error"], 
-                                           f"Parameter '{param.label}' must be a number")
+                        messagebox.showerror(self.i18n["error"],
+                                             f"Parameter '{param.label}' must be a number")
                         return None
                 elif param.type == "path" and not Path(value).exists():
                     # Only warn for paths, don't fail validation
-                    if messagebox.askyesno("Path Warning", 
-                                         f"Path '{value}' does not exist. Continue anyway?"):
+                    if messagebox.askyesno("Path Warning",
+                                           f"Path '{value}' does not exist. Continue anyway?"):
                         pass
                     else:
                         return None
-            
-            if value:
+
+            if value is not None and value != "":
                 params[param.name] = value
-        
+
         return params
-    
-    def _start_background_action(self, action: ActionDefinition, wc_path: str, 
-                               params: Dict[str, Any]):
+
+    def _start_background_action(self, action: ActionDefinition, wc_path: str,
+                                 params: Dict[str, Any]):
         """Start action execution in background thread."""
         if not self.job_manager.start_job(wc_path):
             return
-        
+
         # Update UI
         self.status_var.set(f"Running {action.label}...")
         self.progress_var.set("In Progress")
-        
+
         # Start thread
         thread = threading.Thread(
             target=self._execute_action_background,
@@ -1778,32 +1778,32 @@ class GUI:
             daemon=True
         )
         thread.start()
-    
-    def _execute_action_background(self, action: ActionDefinition, wc_path: str, 
-                                 params: Dict[str, Any]):
+
+    def _execute_action_background(self, action: ActionDefinition, wc_path: str,
+                                   params: Dict[str, Any]):
         """Execute action in background thread."""
         try:
             # Add working copy path if not specified and action needs it
             if "path" in [p.name for p in action.parameters] and "path" not in params:
                 params["path"] = wc_path
-            
+
             # Execute action
             if action.composite:
                 result = self._execute_workflow_action(action.id, params)
             else:
                 result = self._execute_svn_action(action, params)
-            
+
             # Send result to UI thread
             self.message_queue.put(("action_complete", action, result))
-            
+
         except Exception as e:
             logging.error(f"Action execution failed: {e}")
             error_result = SvnResult("", str(e), 1, 0, action.id)
             self.message_queue.put(("action_error", action, error_result))
-        
+
         finally:
             self.job_manager.finish_job(wc_path)
-    
+
     def _execute_workflow_action(self, workflow_id: str, params: Dict[str, Any]) -> SvnResult:
         """Execute a workflow action."""
         if workflow_id == "branch-create":
@@ -1816,11 +1816,11 @@ class GUI:
             return self.workflows.execute_tag_create(params)
         else:
             raise ValueError(f"Unknown workflow: {workflow_id}")
-    
+
     def _execute_svn_action(self, action: ActionDefinition, params: Dict[str, Any]) -> SvnResult:
         """Execute a regular SVN action."""
         args = [action.id]
-        
+
         # Convert parameters to SVN command line arguments
         for param in action.parameters:
             if param.name in params:
@@ -1830,22 +1830,22 @@ class GUI:
                         args.append(f"--{param.name}")
                 else:
                     args.extend([f"--{param.name}", str(value)])
-        
+
         return self.svn.run(args)
-    
+
     def _cancel_action(self):
         """Cancel the currently running action."""
         if self.selected_wc.get():
             self.job_manager.cancel_job(self.selected_wc.get())
             self.status_var.set("Action cancelled")
             self.progress_var.set("Cancelled")
-    
+
     def _process_message_queue(self):
         """Process messages from background threads."""
         try:
             while True:
                 message_type, *args = self.message_queue.get_nowait()
-                
+
                 if message_type == "action_complete":
                     action, result = args
                     self._handle_action_complete(action, result)
@@ -1855,54 +1855,54 @@ class GUI:
                 elif message_type == "log_message":
                     message = args[0]
                     self._log_message(message)
-                    
+
         except queue.Empty:
             pass
-        
+
         # Schedule next check
         self.root.after(100, self._process_message_queue)
-    
+
     def _handle_action_complete(self, action: ActionDefinition, result: SvnResult):
         """Handle successful action completion."""
         self.status_var.set(f"{action.label} completed")
         self.progress_var.set(f"Done ({result.elapsed:.1f}s)")
-        
+
         # Log the result
         self._log_message(f"✓ {action.label} completed successfully")
         if result.stdout:
             self._log_message(result.stdout)
-        
+
         # Refresh working copy status and update Finder indicator
         if self.selected_wc.get():
             self._refresh_working_copy_status(self.selected_wc.get())
-    
+
     def _handle_action_error(self, action: ActionDefinition, result: SvnResult):
         """Handle action execution error."""
         self.status_var.set(f"{action.label} failed")
         self.progress_var.set("Failed")
-        
+
         # Log the error
         self._log_message(f"✗ {action.label} failed")
         if result.stderr:
             self._log_message(f"Error: {result.stderr}")
-        
+
         # Show error dialog
         messagebox.showerror(
             self.i18n["error"],
             f"{action.label} failed:\n{result.stderr[:200]}..."
         )
-    
+
     def _log_message(self, message: str):
         """Add a message to the activity log."""
         if self.log_text:
             timestamp = datetime.now().strftime("%H:%M:%S")
             formatted_message = f"[{timestamp}] {message}\n"
-            
+
             self.log_text.config(state=tk.NORMAL)
             self.log_text.insert(tk.END, formatted_message)
             self.log_text.see(tk.END)
             self.log_text.config(state=tk.DISABLED)
-    
+
     def _on_wc_select(self, event):
         """Handle working copy selection."""
         selection = self.wc_listbox.curselection()
@@ -1916,16 +1916,16 @@ class GUI:
             else:
                 wc_path = wc_display
             self.selected_wc.set(wc_path)
-            
+
             # Update repository browser
             self._update_repo_browser(wc_path)
-    
+
     def _add_working_copy(self):
         """Add a new working copy."""
         path = filedialog.askdirectory(title=self.i18n["choose_directory"])
         if not path:
             return
-        
+
         # Check if it's a valid SVN working copy
         if not self.svn.is_working_copy(path):
             messagebox.showerror(
@@ -1933,7 +1933,7 @@ class GUI:
                 f"'{path}' is not a valid SVN working copy"
             )
             return
-        
+
         # Get working copy info
         wc_info = self.svn.get_working_copy_info(path)
         if not wc_info:
@@ -1942,7 +1942,7 @@ class GUI:
                 "Failed to get working copy information"
             )
             return
-        
+
         # Add to configuration
         self.config_manager.config.working_copies.append({
             "path": path,
@@ -1950,19 +1950,19 @@ class GUI:
             "name": Path(path).name
         })
         self.config_manager.save()
-        
+
         # Update UI
         self._refresh_working_copies()
         # Update Finder indicator for newly added wc
         self._update_finder_indicator_for_path(path)
-    
+
     def _remove_working_copy(self):
         """Remove selected working copy."""
         if not self.selected_wc.get():
             return
-        
+
         wc_path = self.selected_wc.get()
-        
+
         if messagebox.askyesno("Confirm", f"Remove working copy '{wc_path}'?"):
             # Remove from config
             self.config_manager.config.working_copies = [
@@ -1970,22 +1970,22 @@ class GUI:
                 if wc["path"] != wc_path
             ]
             self.config_manager.save()
-            
+
             # Clear Finder indicator comment when removed (best-effort)
-            self._clear_finder_indicator(wc_path)
-            
+            self._clear_finder_tag(wc_path)
+
             # Update UI
             self.selected_wc.set("")
             self._refresh_working_copies()
-    
+
     def _refresh_working_copies(self):
         """Refresh the working copies list."""
         self.wc_listbox.delete(0, tk.END)
-        
+
         for wc in self.config_manager.config.working_copies:
             display_name = f"{wc['name']} ({wc['path']})"
             self.wc_listbox.insert(tk.END, display_name)
-            
+
             # Store the actual path for selection
             if wc["path"] not in self.working_copies:
                 wc_info = self.svn.get_working_copy_info(wc["path"])
@@ -1993,17 +1993,17 @@ class GUI:
                     self.working_copies[wc["path"]] = wc_info
             # Always update finder indicator (ensure status is up to date)
             self._update_finder_indicator_for_path(wc["path"])
-    
+
     def _discover_working_copies(self):
-        """Discover working copies automatically.""" 
+        """Discover working copies automatically."""
         if not self.config_manager.config.working_copies:
             # Look for .svn directories in common locations
             search_paths = [
                 Path.home() / "Documents",
-                Path.home() / "Desktop", 
+                Path.home() / "Desktop",
                 Path.cwd()
             ]
-            
+
             found_wcs = []
             for search_path in search_paths:
                 if search_path.exists():
@@ -2017,172 +2017,180 @@ class GUI:
                                     "url": wc_info.url,
                                     "name": Path(wc_path).name
                                 })
-                                
+
                                 if len(found_wcs) >= 10:  # Limit discovery
                                     break
-            
+
             if found_wcs:
                 self.config_manager.config.working_copies.extend(found_wcs)
                 self.config_manager.save()
-        
+
         self._refresh_working_copies()
-    
+
     def _update_repo_browser(self, wc_path: str):
         """Update repository browser with working copy info."""
         wc_info = self.working_copies.get(wc_path)
+        info_text = ""
         if wc_info:
             info_text = (
                 f"URL: {wc_info.url}\n"
                 f"Repository Root: {wc_info.repository_root}\n"
                 f"Revision: {wc_info.revision}\n"
                 f"Last Changed: {wc_info.last_changed_rev}\n"
-                f"UUID: {wc_info.uuid[:8]}")
-                         
+                f"UUID: {wc_info.uuid[:8] if wc_info.uuid else ''}"
+            )
+
         self.repo_info_text.config(state=tk.NORMAL)
         self.repo_info_text.delete(1.0, tk.END)
         self.repo_info_text.insert(1.0, info_text)
         self.repo_info_text.config(state=tk.DISABLED)
 
-# ---------------------------
-# Finder indicator (macOS)
-# ---------------------------
-def _run_osascript(self, script: str) -> bool:
-    """Run an AppleScript via osascript; return True on success."""
-    if platform.system() != "Darwin":
-        return False
-    try:
-        result = subprocess.run(
-            ["osascript", "-e", script],
-            capture_output=True, text=True, timeout=5
-        )
-        return result.returncode == 0
-    except Exception as e:
-        logging.debug(f"osascript failed: {e}")
-        return False
+    # ---------------------------
+    # Finder indicator (macOS) - methods bound to GUI instance
+    # ---------------------------
+    def _run_osascript(self, script: str) -> bool:
+        """Run an AppleScript via osascript; return True on success."""
+        if platform.system() != "Darwin":
+            return False
+        try:
+            result = subprocess.run(
+                ["osascript", "-e", script],
+                capture_output=True, text=True, timeout=10
+            )
+            return result.returncode == 0
+        except Exception as e:
+            logging.debug(f"osascript failed: {e}")
+            return False
 
-def _set_finder_tag(self, path: str, tag_name: str) -> bool:
-    """
-    Add a Finder tag (label) to the file/folder at path.
-    tag_name should be an existing Finder tag (e.g. "Red", "Green") or a custom tag name.
-    This uses AppleScript to modify the tags metadata visible in Finder.
-    """
-    if platform.system() != "Darwin":
-        return False
-    
-    # Escape single quotes in path and tag_name
-    safe_path = path.replace("'", "\\'")
-    safe_tag = tag_name.replace("'", "\\'")
-    script = (
-        f"try\n"
-        f"  set theFile to POSIX file '{safe_path}' as alias\n"
-        f"  tell application \"Finder\"\n"
-        f"    set currentTags to name of every tag of theFile\n"
-        f"    if currentTags does not contain \"{safe_tag}\" then\n"
-        f"      make new tag at theFile with properties {{name:\"{safe_tag}\"}}\n"
-        f"    end if\n"
-        f"  end tell\n"
-        f"  return true\n"
-        f"on error errMsg\n"
-        f"  return false\n"
-        f"end try"
-    )
-    return self._run_osascript(script)
+    def _set_finder_tag(self, path: str, tag_name: str) -> bool:
+        """
+        Add a Finder tag (label) to the file/folder at path.
+        tag_name should be an existing Finder tag (e.g. "Red", "Green") or a custom tag name.
+        This uses AppleScript to modify the tags metadata visible in Finder.
+        """
+        if platform.system() != "Darwin":
+            return False
 
-def _clear_finder_tag(self, path: str, tag_name: Optional[str] = None) -> bool:
-    """
-    Remove a Finder tag from the file/folder at path.
-    If tag_name is None, attempt to remove our 'SVNMVP:Dirty'/'SVNMVP:Clean' tags.
-    """
-    if platform.system() != "Darwin":
-        return False
-    
-    safe_path = path.replace("'", "\\'")
-    if tag_name:
+        # Escape single quotes in path and tag_name
+        safe_path = path.replace("'", "\\'")
         safe_tag = tag_name.replace("'", "\\'")
         script = (
             f"try\n"
             f"  set theFile to POSIX file '{safe_path}' as alias\n"
             f"  tell application \"Finder\"\n"
-            f"    set currentTags to every tag of theFile\n"
-            f"    repeat with t in currentTags\n"
-            f"      if name of t is \"{safe_tag}\" then\n"
-            f"        delete t\n"
-            f"        exit repeat\n"
-            f"      end if\n"
-            f"    end repeat\n"
+            f"    set currentTags to name of every tag of theFile\n"
+            f"    if currentTags does not contain \"{safe_tag}\" then\n"
+            f"      make new tag at theFile with properties {{name:\"{safe_tag}\"}}\n"
+            f"    end if\n"
             f"  end tell\n"
             f"  return true\n"
-            f"on error\n"
+            f"on error errMsg\n"
             f"  return false\n"
             f"end try"
         )
         return self._run_osascript(script)
-    else:
-        # Try removing common tags we might set
-        removed1 = self._clear_finder_tag(path, "SVNMVP:Dirty")
-        removed2 = self._clear_finder_tag(path, "SVNMVP:Clean")
-        # Also try named color tags
-        removed3 = self._clear_finder_tag(path, "Red")
-        removed4 = self._clear_finder_tag(path, "Green")
-        return any((removed1, removed2, removed3, removed4))
 
-def _update_finder_indicator_for_path(self, path: str):
-    """
-    Check WC status and set Finder tag:
-     - 'SVNMVP:Dirty' (or Red) if there are uncommitted changes
-     - 'SVNMVP:Clean' (or Green) if clean
-    This is best-effort and will silently no-op on non-macOS.
-    """
-    try:
+    def _clear_finder_tag(self, path: str, tag_name: Optional[str] = None) -> bool:
+        """
+        Remove a Finder tag from the file/folder at path.
+        If tag_name is None, attempt to remove our 'SVNMVP:Dirty'/'SVNMVP:Clean' tags
+        and common color tags.
+        """
         if platform.system() != "Darwin":
-            return
-        
-        has_changes = self.svn.has_uncommitted_changes(path)
-        if has_changes:
-            # Remove clean tag, set dirty tag
-            self._clear_finder_tag(path, "SVNMVP:Clean")
-            # Prefer setting a colored system tag if available, else use named tag
-            if not self._set_finder_tag(path, "Red"):
-                self._set_finder_tag(path, "SVNMVP:Dirty")
+            return False
+
+        safe_path = path.replace("'", "\\'")
+        if tag_name:
+            safe_tag = tag_name.replace("'", "\\'")
+            script = (
+                f"try\n"
+                f"  set theFile to POSIX file '{safe_path}' as alias\n"
+                f"  tell application \"Finder\"\n"
+                f"    set currentTags to every tag of theFile\n"
+                f"    repeat with t in currentTags\n"
+                f"      if name of t is \"{safe_tag}\" then\n"
+                f"        delete t\n"
+                f"        exit repeat\n"
+                f"      end if\n"
+                f"    end repeat\n"
+                f"  end tell\n"
+                f"  return true\n"
+                f"on error\n"
+                f"  return false\n"
+                f"end try"
+            )
+            return self._run_osascript(script)
         else:
-            # Remove dirty tag, set clean tag
-            self._clear_finder_tag(path, "SVNMVP:Dirty")
-            if not self._set_finder_tag(path, "Green"):
-                self._set_finder_tag(path, "SVNMVP:Clean")
-    except Exception as e:
-        logging.debug(f"Failed to update Finder indicator for {path}: {e}")
+            # Try removing common tags we might set
+            removed_any = False
+            for tag in ("SVNMVP:Dirty", "SVNMVP:Clean", "Red", "Green"):
+                try:
+                    if self._clear_finder_tag(path, tag):
+                        removed_any = True
+                except Exception:
+                    pass
+            return removed_any
 
-def _browse_repo_path(self, path_type: str):
-    """Browse repository path in external browser."""
-    if not self.selected_wc.get():
-        messagebox.showwarning(self.i18n["warning"], self.i18n["no_wc_selected"])
-        return
-    
-    wc_info = self.working_copies.get(self.selected_wc.get())
-    if not wc_info:
-        return
-    
-    # Construct URL based on standard layout
-    repo_root = wc_info.repository_root
-    if path_type == "trunk":
-        url = f"{repo_root}/{self.config_manager.config.default_trunk_path}"
-    elif path_type == "branches":
-        url = f"{repo_root}/{self.config_manager.config.default_branches_path}"
-    elif path_type == "tags":
-        url = f"{repo_root}/{self.config_manager.config.default_tags_path}"
-    else:
-        url = repo_root
-    
-    # Try to open in web browser (if it's HTTP/HTTPS)
-    if url.startswith(("http://", "https://")):
-        webbrowser.open(url)
-    else:
-        # Copy URL to clipboard
-        self.root.clipboard_clear()
-        self.root.clipboard_append(url)
-        messagebox.showinfo("URL Copied", f"Repository URL copied to clipboard:\n{url}")
+    def _update_finder_indicator_for_path(self, path: str):
+        """
+        Check WC status and set Finder tag:
+         - 'SVNMVP:Dirty' (or Red) if there are uncommitted changes
+         - 'SVNMVP:Clean' (or Green) if clean
+        This is best-effort and will silently no-op on non-macOS.
+        """
+        try:
+            if platform.system() != "Darwin":
+                return
 
-    # Repository listing and log viewer helpers
+            has_changes = self.svn.has_uncommitted_changes(path)
+            if has_changes:
+                # Remove clean tag, set dirty tag
+                self._clear_finder_tag(path, "SVNMVP:Clean")
+                # Prefer setting a colored system tag if available, else use named tag
+                if not self._set_finder_tag(path, "Red"):
+                    self._set_finder_tag(path, "SVNMVP:Dirty")
+            else:
+                # Remove dirty tag, set clean tag
+                self._clear_finder_tag(path, "SVNMVP:Dirty")
+                if not self._set_finder_tag(path, "Green"):
+                    self._set_finder_tag(path, "SVNMVP:Clean")
+        except Exception as e:
+            logging.debug(f"Failed to update Finder indicator for {path}: {e}")
+
+    def _browse_repo_path(self, path_type: str):
+        """Browse repository path in external browser or copy to clipboard."""
+        if not self.selected_wc.get():
+            messagebox.showwarning(self.i18n["warning"], self.i18n["no_wc_selected"])
+            return
+
+        wc_info = self.working_copies.get(self.selected_wc.get())
+        if not wc_info:
+            return
+
+        # Construct URL based on standard layout
+        repo_root = wc_info.repository_root
+        if path_type == "trunk":
+            url = f"{repo_root}/{self.config_manager.config.default_trunk_path}"
+        elif path_type == "branches":
+            url = f"{repo_root}/{self.config_manager.config.default_branches_path}"
+        elif path_type == "tags":
+            url = f"{repo_root}/{self.config_manager.config.default_tags_path}"
+        else:
+            url = repo_root
+
+        # Try to open in web browser (if it's HTTP/HTTPS)
+        if url.startswith(("http://", "https://")):
+            webbrowser.open(url)
+        else:
+            # Copy URL to clipboard
+            try:
+                self.root.clipboard_clear()
+                self.root.clipboard_append(url)
+                messagebox.showinfo("URL Copied", f"Repository URL copied to clipboard:\n{url}")
+            except Exception:
+                # Fallback to showing in dialog
+                self._show_text_dialog("Repository URL", url)
+
     def _open_repo_listing(self, url: str = None, revision: Optional[str] = None,
                            recursive: bool = False):
         """
@@ -2255,145 +2263,155 @@ def _browse_repo_path(self, path_type: str):
 
     def _show_text_dialog(self, title: str, text: str):
         """Helper: show a read-only scrollable dialog with text."""
-        dlg = tk.Toplevel(self.root)
-        dlg.title(title)
-        dlg.geometry("900x600")
-        frame = tk.Frame(dlg)
-        frame.pack(fill=tk.BOTH, expand=True)
-        st = scrolledtext.ScrolledText(frame, wrap=tk.WORD)
-        st.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
-        st.insert("1.0", text)
-        st.configure(state="disabled")
+        try:
+            dlg = tk.Toplevel(self.root)
+            dlg.title(title)
+            dlg.geometry("900x600")
+            frame = tk.Frame(dlg)
+            frame.pack(fill=tk.BOTH, expand=True)
+            st = scrolledtext.ScrolledText(frame, wrap=tk.WORD)
+            st.pack(fill=tk.BOTH, expand=True, padx=6, pady=6)
+            st.insert("1.0", text)
+            st.configure(state="disabled")
 
-        btn_frame = tk.Frame(dlg)
-        btn_frame.pack(fill=tk.X, pady=(0,6))
-        tk.Button(btn_frame, text=self.i18n.get("close", "Close"), command=dlg.destroy).pack(side=tk.RIGHT, padx=6)
+            btn_frame = tk.Frame(dlg)
+            btn_frame.pack(fill=tk.X, pady=(0, 6))
+            tk.Button(btn_frame, text=self.i18n.get("close", "Close"), command=dlg.destroy).pack(side=tk.RIGHT, padx=6)
+        except Exception as e:
+            logging.debug(f"Failed to open text dialog: {e}")
+            # Last resort: print to log_text or console
+            self._log_message(text)
 
-def _refresh_working_copy_status(self, wc_path: str):
-    """Refresh status of a working copy.""" 
-    if wc_path in self.working_copies:
-        wc_info = self.svn.get_working_copy_info(wc_path)
-        if wc_info:
-            self.working_copies[wc_path] = wc_info
-            if wc_path == self.selected_wc.get():
-                self._update_repo_browser(wc_path)
+    def _refresh_working_copy_status(self, wc_path: str):
+        """Refresh status of a working copy."""
+        if wc_path in self.working_copies:
+            wc_info = self.svn.get_working_copy_info(wc_path)
+            if wc_info:
+                self.working_copies[wc_path] = wc_info
+                if wc_path == self.selected_wc.get():
+                    self._update_repo_browser(wc_path)
         # Update Finder indicator after refreshing status
         self._update_finder_indicator_for_path(wc_path)
 
-def _clear_log(self):
-    """Clear the activity log."""
-    self.log_text.config(state=tk.NORMAL)
-    self.log_text.delete(1.0, tk.END)
-    self.log_text.config(state=tk.DISABLED)
+    def _clear_log(self):
+        """Clear the activity log."""
+        if not self.log_text:
+            return
+        self.log_text.config(state=tk.NORMAL)
+        self.log_text.delete(1.0, tk.END)
+        self.log_text.config(state=tk.DISABLED)
 
-def _save_log(self):
-    """Save the activity log to a file."""
-    filename = filedialog.asksaveasfilename(
-        title="Save Log",
-        defaultextension=".txt",
-        filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
-    )
-    
-    if filename:
+    def _save_log(self):
+        """Save the activity log to a file."""
         try:
-            content = self.log_text.get(1.0, tk.END)
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(content)
-            messagebox.showinfo(self.i18n["success"], f"Log saved to {filename}")
+            filename = filedialog.asksaveasfilename(
+                title="Save Log",
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
+            )
+
+            if filename:
+                content = self.log_text.get(1.0, tk.END)
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                messagebox.showinfo(self.i18n["success"], f"Log saved to {filename}")
         except Exception as e:
             messagebox.showerror(self.i18n["error"], f"Failed to save log: {e}")
 
-def _browse_svn_binary(self):
-    """Browse for SVN binary path."""
-    filename = filedialog.askopenfilename(
-        title="Select SVN Binary",
-        filetypes=[("Executable files", "*"), ("All files", "*.*")]
-    )
-    
-    if filename:
-        self.binary_var.set(filename)
+    def _browse_svn_binary(self):
+        """Browse for SVN binary path."""
+        filename = filedialog.askopenfilename(
+            title="Select SVN Binary",
+            filetypes=[("Executable files", "*"), ("All files", "*.*")]
+        )
 
-def _change_theme(self):
-    """Change the application theme."""
-    theme_name = self.theme_var.get()
-    try:
-        theme = Theme(theme_name)
-        self.current_theme = theme
-        self._apply_theme()
-        
-        # Save to config
-        self.config_manager.config.theme = theme_name
-        self.config_manager.save()
-        
-    except ValueError:
-        messagebox.showerror(self.i18n["error"], f"Invalid theme: {theme_name}")
+        if filename:
+            self.binary_var.set(filename)
 
-def _apply_theme(self):
-    """Apply the current theme to all widgets."""
-    if self.current_theme == Theme.SYSTEM:
-        # Use system theme detection
-        self._detect_system_theme()
-    
-    colors = THEMES[self.current_theme]
-    
-    # Apply to root window
-    try:
-        self.root.configure(bg=colors.bg)
-        
-        # Apply to ttk widgets
-        style = ttk.Style()
-        # Don't assume 'clam' is available/configured in all environments; attempt safe usage
+    def _change_theme(self):
+        """Change the application theme."""
+        theme_name = self.theme_var.get()
         try:
-            style.theme_use('clam')
+            theme = Theme(theme_name)
+            self.current_theme = theme
+            self._apply_theme()
+
+            # Save to config
+            self.config_manager.config.theme = theme_name
+            self.config_manager.save()
+
+        except Exception:
+            messagebox.showerror(self.i18n["error"], f"Invalid theme: {theme_name}")
+
+    def _apply_theme(self):
+        """Apply the current theme to all widgets."""
+        try:
+            if self.current_theme == Theme.SYSTEM:
+                # Use system theme detection
+                self._detect_system_theme()
+
+            colors = THEMES.get(self.current_theme, THEMES[Theme.LIGHT])
+
+            # Apply to root window
+            self.root.configure(bg=colors.bg)
+
+            # Apply to ttk widgets
+            style = ttk.Style()
+            # Don't assume 'clam' is available/configured in all environments; attempt safe usage
+            try:
+                style.theme_use('clam')
+            except Exception:
+                pass
+
+            # Configure ttk styles (best-effort)
+            style.configure('TLabel', background=colors.bg, foreground=colors.fg)
+            style.configure('TFrame', background=colors.bg)
+            style.configure('TButton', background=colors.button_bg, foreground=colors.button_fg)
+            style.configure('TEntry', fieldbackground=colors.entry_bg, foreground=colors.entry_fg)
+            style.configure('TCombobox', fieldbackground=colors.entry_bg, foreground=colors.entry_fg)
+        except Exception as e:
+            logging.warning(f"Failed to apply theme: {e}")
+
+    def _save_settings(self):
+        """Save current settings."""
+        # Update config from UI
+        self.config_manager.config.svn_binary_path = self.binary_var.get()
+        self.config_manager.config.theme = self.theme_var.get()
+        self.config_manager.config.use_keychain = self.keychain_var.get()
+
+        # Validate SVN binary
+        try:
+            test_svn = SvnRunner(self.config_manager.config.svn_binary_path)
+            self.svn = test_svn
+            messagebox.showinfo(self.i18n["success"], "Settings saved successfully")
+        except ValueError:
+            messagebox.showerror(
+                self.i18n["error"],
+                f"Invalid SVN binary: {self.config_manager.config.svn_binary_path}"
+            )
+            return
+
+        # Save to file
+        self.config_manager.save()
+
+    def _on_closing(self):
+        """Handle application closing."""
+        # Save window geometry
+        try:
+            self.config_manager.config.window_geometry = self.root.geometry()
         except Exception:
             pass
-        
-        # Configure ttk styles
-        style.configure('TLabel', background=colors.bg, foreground=colors.fg)
-        style.configure('TFrame', background=colors.bg)
-        style.configure('TButton', background=colors.button_bg, foreground=colors.button_fg)
-        style.configure('TEntry', fieldbackground=colors.entry_bg, foreground=colors.entry_fg)
-        style.configure('TCombobox', fieldbackground=colors.entry_bg, foreground=colors.entry_fg)
-        
-    except Exception as e:
-        logging.warning(f"Failed to apply theme: {e}")
+        self.config_manager.save()
 
-def _save_settings(self):
-    """Save current settings."""
-    # Update config from UI
-    self.config_manager.config.svn_binary_path = self.binary_var.get()
-    self.config_manager.config.theme = self.theme_var.get()
-    self.config_manager.config.use_keychain = self.keychain_var.get()
-    
-    # Validate SVN binary
-    try:
-        test_svn = SvnRunner(self.config_manager.config.svn_binary_path)
-        self.svn = test_svn
-        messagebox.showinfo(self.i18n["success"], "Settings saved successfully")
-    except ValueError:
-        messagebox.showerror(
-            self.i18n["error"], 
-            f"Invalid SVN binary: {self.config_manager.config.svn_binary_path}"
-        )
-        return
-    
-    # Save to file
-    self.config_manager.save()
+        # Cleanup any active jobs
+        for wc_path in list(self.job_manager.active_jobs.keys()):
+            self.job_manager.cancel_job(wc_path)
 
-def _on_closing(self):
-    """Handle application closing."""
-    # Save window geometry
-    try:
-        self.config_manager.config.window_geometry = self.root.geometry()
-    except Exception:
-        pass
-    self.config_manager.save()
-    
-    # Cleanup any active jobs
-    for wc_path in list(self.job_manager.active_jobs.keys()):
-        self.job_manager.cancel_job(wc_path)
-    
-    self.root.destroy()
+        try:
+            self.root.destroy()
+        except Exception:
+            pass
+
 
 def main() -> int:
     """Main entry point."""
